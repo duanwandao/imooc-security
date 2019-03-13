@@ -47,6 +47,7 @@
         </dependency>
     </dependencies>
 
+    <!--重新打包，可以独立运行的jar包-->
     <build>
         <plugins>
             <plugin>
