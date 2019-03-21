@@ -1,13 +1,16 @@
 package com.imooc.security.core.validate.code;
 
+import com.imooc.security.core.properties.SecurityProperties;
 import com.imooc.security.core.validate.code.image.ImageCode;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.social.connect.web.HttpSessionSessionStrategy;
 import org.springframework.social.connect.web.SessionStrategy;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.bind.ServletRequestBindingException;
 import org.springframework.web.bind.ServletRequestUtils;
 import org.springframework.web.context.request.ServletWebRequest;
@@ -18,36 +21,77 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
+ * 校验验证码的过滤器
  * @Description
  * @auther 断弯刀
  * @create 2019-03-20 14:35
  */
 @Data
 @Slf4j
-public class ValidateCodeFilter extends OncePerRequestFilter {
+//InitializingBean在其他参数都组装完毕以后，初始化urls的值
+public class ValidateCodeFilter extends OncePerRequestFilter implements InitializingBean {
 
+    /**
+     * 验证码校验失败处理器
+     */
     @Autowired
     private AuthenticationFailureHandler authenticationFailureHandler;
 
     private SessionStrategy sessionStrategy = new HttpSessionSessionStrategy();
 
+    /**
+     * 存放所有需要校验验证码的url
+     */
+    private Set<String> urls = new HashSet<>();
+
+    /**
+     * 系统配置信息
+     */
+    @Autowired
+    private SecurityProperties securityProperties;
+
+    /**
+     * 验证请求url与配置的url是否匹配的工具类
+     */
+    private AntPathMatcher antPathMatcher = new AntPathMatcher();
+
+    /**
+     * 初始化要拦截的url配置信息
+     * @throws ServletException
+     */
+    @Override
+    public void afterPropertiesSet() throws ServletException {
+        String[] configUrls = StringUtils.splitByWholeSeparator(securityProperties.getCode().getImage().getUrl(), ",");
+        for (String url : configUrls) {
+            urls.add(url);
+        }
+        urls.add("/authentication/form");
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        //主干逻辑
-        //必须是个请求路径并且必须是post请求
-        if (StringUtils.equals("/authentication/form", request.getRequestURI()) && StringUtils.equalsIgnoreCase(request.getMethod(), "post")) {
+
+        boolean action = false;
+        log.info("urls的长度是:" + urls.size() + " 它们是：" + urls.toString());
+        log.info("requestUri是:" + request.getRequestURI());
+        for (String url : urls) {
+            if (antPathMatcher.match(url, request.getRequestURI())) {
+                action = true;
+            }
+        }
+        if (action) {
             try {
                 //校验逻辑
                 validate(new ServletWebRequest(request));
             }catch (ValidateCodeException e){
-                log.info("ValidateCodeFilter==>doFilterInternal==>authenticationFailureHandler.getClass().getName()== "+authenticationFailureHandler.getClass().getName());
                 authenticationFailureHandler.onAuthenticationFailure(request, response, e);
                 return;
             }
         }
-
         filterChain.doFilter(request, response);
     }
 

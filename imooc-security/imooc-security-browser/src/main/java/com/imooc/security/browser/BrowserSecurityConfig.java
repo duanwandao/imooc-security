@@ -15,6 +15,7 @@ import org.springframework.security.crypto.scrypt.SCryptPasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
+ * 浏览器环境下安全配置主类
  * @Description
  * @auther 断弯刀
  * @create 2019-03-19 16:05
@@ -45,6 +46,8 @@ public class BrowserSecurityConfig extends WebSecurityConfigurerAdapter {
 
         ValidateCodeFilter validateCodeFilter = new ValidateCodeFilter();
         validateCodeFilter.setAuthenticationFailureHandler(imoocAuthenticationFailureHandler);
+        validateCodeFilter.setSecurityProperties(securityProperties);
+        validateCodeFilter.afterPropertiesSet();
 
         //在UsernamePasswordAuthenticationFilter 过滤器前 加一个过滤器 来搞验证码
         http.addFilterBefore(validateCodeFilter, UsernamePasswordAuthenticationFilter.class)
@@ -63,6 +66,5 @@ public class BrowserSecurityConfig extends WebSecurityConfigurerAdapter {
                 .authenticated()   //都需要认证
             .and()
                 .csrf().disable();
-
     }
 }
