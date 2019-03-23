@@ -2,6 +2,8 @@ package com.imooc.security.core.validate.code;
 
 import com.imooc.security.core.properties.SecurityProperties;
 import com.imooc.security.core.validate.code.image.ImageCodeGenerator;
+import com.imooc.security.core.validate.code.sms.DefaultSmsCodeSender;
+import com.imooc.security.core.validate.code.sms.SmsCodeSender;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
@@ -31,4 +33,16 @@ public class ValidateCodeBeanConfig {
         codeGenerator.setSecurityProperties(securityProperties);
         return codeGenerator;
     }
+
+    /**
+     * 短信验证码发送器
+     * ConditionalOnMissingBean 两种参数配置方式
+     * @return
+     */
+    @Bean
+    @ConditionalOnMissingBean(SmsCodeSender.class)
+    public SmsCodeSender smsCodeSender() {
+        return new DefaultSmsCodeSender();
+    }
+
 }

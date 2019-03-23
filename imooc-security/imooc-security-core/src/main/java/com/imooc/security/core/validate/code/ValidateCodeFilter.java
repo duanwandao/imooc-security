@@ -33,6 +33,7 @@ import java.util.Set;
 @Data
 @Slf4j
 //InitializingBean在其他参数都组装完毕以后，初始化urls的值
+//spring初始化bean的时候，如果bean实现了InitializingBean接口，会自动调用afterPropertiesSet方法。
 public class ValidateCodeFilter extends OncePerRequestFilter implements InitializingBean {
 
     /**
@@ -70,6 +71,7 @@ public class ValidateCodeFilter extends OncePerRequestFilter implements Initiali
             urls.add(url);
         }
         urls.add("/authentication/form");
+        log.info("ValidateCodeFilter 启动了");
     }
 
     @Override
@@ -98,8 +100,8 @@ public class ValidateCodeFilter extends OncePerRequestFilter implements Initiali
     //校验逻辑
     private void validate(ServletWebRequest request) throws ServletRequestBindingException {
 
-        ImageCode codeInSession = (ImageCode)sessionStrategy.getAttribute(request,
-                ValidateCodeController.SESSION_KEY);
+        ImageCode codeInSession = (ImageCode) sessionStrategy.getAttribute(request,
+                ValidateCodeProcessor.SESSION_KEY_PREFIX + "IMAGE");
 
         String codeInRequest = ServletRequestUtils.getStringParameter(request.getRequest(), "imageCode");
 
@@ -110,13 +112,13 @@ public class ValidateCodeFilter extends OncePerRequestFilter implements Initiali
             throw new ValidateCodeException("验证码不存在");
         }
         if (codeInSession.isExpried()) {
-            sessionStrategy.removeAttribute(request, ValidateCodeController.SESSION_KEY);
+            sessionStrategy.removeAttribute(request, ValidateCodeProcessor.SESSION_KEY_PREFIX + "IMAGE");
             throw new ValidateCodeException("验证码已过期");
         }
         if (!StringUtils.equals(codeInSession.getCode(), codeInRequest)) {
             throw new ValidateCodeException("验证码不匹配");
         }
 
-        sessionStrategy.removeAttribute(request, ValidateCodeController.SESSION_KEY);
+        sessionStrategy.removeAttribute(request, ValidateCodeProcessor.SESSION_KEY_PREFIX + "IMAGE");
     }
 }

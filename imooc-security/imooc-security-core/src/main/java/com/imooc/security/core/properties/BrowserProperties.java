@@ -15,4 +15,6 @@ public class BrowserProperties {
 
     private LoginResponseType loginType = LoginResponseType.JSON;  //默认返回json
 
+    private int rememberMeSeconds = 3600;
+
 }

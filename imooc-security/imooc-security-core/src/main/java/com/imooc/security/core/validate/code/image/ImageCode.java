@@ -26,4 +26,5 @@ public class ImageCode extends ValidateCode {
         super(code, expireTime);
         this.image = image;
     }
+
 }

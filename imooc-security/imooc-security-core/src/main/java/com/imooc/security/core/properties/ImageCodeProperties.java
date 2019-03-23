@@ -15,5 +15,5 @@ public class ImageCodeProperties {
     private int length = 4;    //验证码长度
     private int expireIn = 60;   //失效时间
 
-    private String url;
+    private String url = "";
 }
